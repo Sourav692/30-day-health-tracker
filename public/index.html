@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>30-Day Health & Recovery Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-2: #334155;
+      --border: #475569;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.15);
+      --green: #4ade80;
+      --green-dim: rgba(74, 222, 128, 0.15);
+      --amber: #fbbf24;
+      --amber-dim: rgba(251, 191, 36, 0.15);
+      --red: #f87171;
+      --red-dim: rgba(248, 113, 113, 0.15);
+      --purple: #a78bfa;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 20px 16px 80px;
+    }
+
+    header {
+      text-align: center;
+      padding: 40px 0 32px;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-card .stat-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .stat-card .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+
+    .stat-card.streak .stat-value { color: var(--green); }
+    .stat-card.energy .stat-value { color: var(--amber); }
+    .stat-card.libido .stat-value { color: var(--red); }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 4px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .tab:hover:not(.active) {
+      background: var(--surface-2);
+      color: var(--text);
+    }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .card h3 {
+      font-size: 1rem;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .day-row {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(71, 85, 105, 0.4);
+    }
+
+    .day-row:last-child { border-bottom: none; }
+
+    .day-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .day-label.today {
+      color: var(--accent);
+    }
+
+    .habits-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .habit-btn {
+      width: 38px;
+      height: 38px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: transparent;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .habit-btn:hover {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .habit-btn.checked {
+      border-color: var(--green);
+      background: var(--green-dim);
+    }
+
+    .habit-btn .tooltip {
+      display: none;
+      position: absolute;
+      bottom: 110%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 0.7rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      border: 1px solid var(--border);
+      z-index: 10;
+    }
+
+    .habit-btn:hover .tooltip { display: block; }
+
+    .score-input {
+      width: 38px;
+      height: 38px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .score-input:focus { border-color: var(--accent); }
+    .score-input.score-low { border-color: var(--red); color: var(--red); }
+    .score-input.score-mid { border-color: var(--amber); color: var(--amber); }
+    .score-input.score-high { border-color: var(--green); color: var(--green); }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .legend span { display: flex; align-items: center; gap: 4px; }
+
+    .info-section h2 {
+      font-size: 1.3rem;
+      margin-bottom: 12px;
+      color: var(--accent);
+    }
+
+    .info-section h3 {
+      font-size: 1.05rem;
+      margin: 20px 0 8px;
+      color: var(--text);
+    }
+
+    .info-section ul {
+      padding-left: 20px;
+      margin-bottom: 12px;
+    }
+
+    .info-section li {
+      margin-bottom: 6px;
+      color: var(--text-muted);
+    }
+
+    .info-section li strong { color: var(--text); }
+
+    .info-section .highlight-box {
+      background: var(--accent-glow);
+      border-left: 3px solid var(--accent);
+      padding: 12px 16px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin: 12px 0;
+      font-size: 0.9rem;
+    }
+
+    .info-section .warning-box {
+      background: var(--amber-dim);
+      border-left: 3px solid var(--amber);
+      padding: 12px 16px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin: 12px 0;
+      font-size: 0.9rem;
+    }
+
+    .schedule-block {
+      background: var(--surface-2);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+
+    .schedule-block .time {
+      font-size: 0.8rem;
+      color: var(--accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .schedule-block .activity {
+      margin-top: 4px;
+      font-size: 0.9rem;
+    }
+
+    .weekly-review {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .weekly-review h3 { margin-bottom: 12px; }
+
+    .review-textarea {
+      width: 100%;
+      min-height: 80px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 12px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      resize: vertical;
+      outline: none;
+      margin-bottom: 10px;
+    }
+
+    .review-textarea:focus { border-color: var(--accent); }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .btn-danger {
+      background: var(--red-dim);
+      color: var(--red);
+      border: 1px solid var(--red);
+    }
+
+    .btn-danger:hover { background: var(--red); color: var(--bg); }
+
+    .actions-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .progress-bar-container {
+      background: var(--surface-2);
+      border-radius: 20px;
+      height: 8px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 20px;
+      background: linear-gradient(90deg, var(--accent), var(--green));
+      transition: width 0.5s ease;
+    }
+
+    .chart-container {
+      margin-top: 16px;
+    }
+
+    .chart-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .chart-label {
+      width: 50px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    .chart-bar-bg {
+      flex: 1;
+      background: var(--surface-2);
+      border-radius: 4px;
+      height: 20px;
+      overflow: hidden;
+    }
+
+    .chart-bar {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+      display: flex;
+      align-items: center;
+      padding-left: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .chart-bar.energy-bar { background: linear-gradient(90deg, var(--amber), #f59e0b); }
+    .chart-bar.libido-bar { background: linear-gradient(90deg, var(--red), #ef4444); }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--green);
+      color: var(--bg);
+      padding: 12px 24px;
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-size: 0.9rem;
+      z-index: 1000;
+      transition: transform 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    .score-guide {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .score-guide-card {
+      background: var(--surface-2);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+    }
+
+    .score-guide-card h4 {
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+
+    .score-item {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      margin-bottom: 4px;
+      font-size: 0.85rem;
+    }
+
+    .score-num {
+      font-weight: 800;
+      min-width: 16px;
+    }
+
+    .score-desc { color: var(--text-muted); }
+
+    @media (max-width: 640px) {
+      header h1 { font-size: 1.5rem; }
+      .stats-bar { grid-template-columns: repeat(2, 1fr); }
+      .day-row { grid-template-columns: 70px 1fr; }
+      .habit-btn, .score-input { width: 34px; height: 34px; font-size: 0.85rem; }
+      .score-guide { grid-template-columns: 1fr; }
+      .tabs { gap: 2px; }
+      .tab { padding: 8px 10px; font-size: 0.78rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>30-Day Health & Recovery Tracker</h1>
+    <p>Start Date: 16 April 2026 &nbsp;|&nbsp; Consistency > Perfection</p>
+  </header>
+
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card">
+      <div class="stat-value" id="dayCount">0</div>
+      <div class="stat-label">Day</div>
+    </div>
+    <div class="stat-card streak">
+      <div class="stat-value" id="streakCount">0</div>
+      <div class="stat-label">Streak</div>
+    </div>
+    <div class="stat-card energy">
+      <div class="stat-value" id="avgEnergy">—</div>
+      <div class="stat-label">Avg Energy</div>
+    </div>
+    <div class="stat-card libido">
+      <div class="stat-value" id="avgLibido">—</div>
+      <div class="stat-label">Avg Libido</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="completionPct">0%</div>
+      <div class="stat-label">Completion</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="tracker">Tracker</button>
+    <button class="tab" data-tab="progress">Progress</button>
+    <button class="tab" data-tab="plan">Daily Plan</button>
+    <button class="tab" data-tab="guide">Scoring Guide</button>
+    <button class="tab" data-tab="rules">Rules & Tips</button>
+  </div>
+
+  <!-- TRACKER SECTION -->
+  <div class="section active" id="tracker">
+    <div class="legend">
+      <span>☀️ Sun</span>
+      <span>🏃 Workout</span>
+      <span>🚶 Move Breaks</span>
+      <span>🚫 No Porn</span>
+      <span>😴 Sleep 7+</span>
+      <span>⚡ Energy</span>
+      <span>❤️ Libido</span>
+    </div>
+
+    <div id="weekContainer"></div>
+
+    <div class="actions-bar">
+      <button class="btn btn-primary" onclick="saveData()">💾 Save Progress</button>
+      <button class="btn btn-primary" onclick="exportData()">📤 Export Data</button>
+      <button class="btn btn-danger" onclick="resetData()">🗑️ Reset All</button>
+    </div>
+  </div>
+
+  <!-- PROGRESS SECTION -->
+  <div class="section" id="progress">
+    <div class="card">
+      <h3>📈 Overall Progress</h3>
+      <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:8px;">Habit completion rate</p>
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="overallProgress" style="width:0%"></div>
+      </div>
+      <p style="text-align:right;font-size:0.8rem;color:var(--text-muted);" id="progressText">0%</p>
+    </div>
+
+    <div class="card">
+      <h3>⚡ Energy Trend</h3>
+      <div class="chart-container" id="energyChart"></div>
+    </div>
+
+    <div class="card">
+      <h3>❤️ Libido Trend</h3>
+      <div class="chart-container" id="libidoChart"></div>
+    </div>
+
+    <div class="weekly-review" id="weeklyReviews">
+      <h3>📝 Weekly Reviews</h3>
+      <div id="reviewsContainer"></div>
+    </div>
+  </div>
+
+  <!-- DAILY PLAN SECTION -->
+  <div class="section" id="plan">
+    <div class="card info-section">
+      <h2>📅 Your Daily Timetable</h2>
+
+      <div class="schedule-block">
+        <div class="time">🌅 Morning (7:00 – 9:00 AM)</div>
+        <div class="activity">
+          Wake up → Drink water → <strong>Sunlight 15–20 min</strong> (balcony, no phone)<br>
+          Light activation: 10 squats, 5–10 push-ups, 20 sec plank<br>
+          Breakfast: Eggs / protein + <strong>Vitamin D3</strong> (on weekly dose day)
+        </div>
+      </div>
+
+      <div class="schedule-block">
+        <div class="time">💻 Work Block 1 (9:30 AM – 1:00 PM)</div>
+        <div class="activity">Work normally. <strong>Every 1 hour → 5 min movement</strong> (walk, stretch)</div>
+      </div>
+
+      <div class="schedule-block">
+        <div class="time">🍛 Lunch + Reset (1:00 – 2:00 PM)</div>
+        <div class="activity">Normal home food, avoid heavy junk. <strong>5–10 min slow walk</strong> after.</div>
+      </div>
+
+      <div class="schedule-block">
+        <div class="time">💻 Work Block 2 (2:00 – 6:00 PM)</div>
+        <div class="activity">Same rule: <strong>5 min movement every hour</strong></div>
+      </div>
+
+      <div class="schedule-block">
+        <div class="time">🏃 Main Workout (6:30 – 7:15 PM)</div>
+        <div class="activity">
+          <strong>Option A (Home):</strong> Brisk walk 20–30 min + Squats 3×12, Push-ups 3×8, Plank 3×30s<br>
+          <strong>Option B (Outside):</strong> Fast walking / light jogging
+        </div>
+      </div>
+
+      <div class="schedule-block">
+        <div class="time">🍽️ Dinner (7:30 – 8:30 PM)</div>
+        <div class="activity">Keep it light. Include protein (dal/paneer/eggs/chicken)</div>
+      </div>
+
+      <div class="schedule-block">
+        <div class="time">🧠 Night Reset (9:30 – 10:30 PM)</div>
+        <div class="activity">No heavy screens. <strong>Avoid porn.</strong> 10 min calm time.</div>
+      </div>
+
+      <div class="schedule-block">
+        <div class="time">😴 Sleep (Before 11:30 PM)</div>
+        <div class="activity"><strong>7–8 hours.</strong> Directly affects testosterone and erections.</div>
+      </div>
+
+      <div class="highlight-box" style="margin-top:20px;">
+        <strong>💊 Weekly:</strong> Vitamin D3 60,000 IU once per week (same day, after meal with fat)
+      </div>
+    </div>
+  </div>
+
+  <!-- SCORING GUIDE SECTION -->
+  <div class="section" id="guide">
+    <div class="card info-section">
+      <h2>📊 How to Score</h2>
+      <p style="color:var(--text-muted);margin-bottom:16px;">Score at the <strong>end of the day</strong> honestly. Look at <strong>weekly trends</strong>, not single days.</p>
+
+      <div class="score-guide">
+        <div class="score-guide-card">
+          <h4>⚡ Energy (1–5)</h4>
+          <p style="color:var(--text-muted);font-size:0.8rem;margin-bottom:8px;">"How physically and mentally active did I feel today?"</p>
+          <div class="score-item"><span class="score-num" style="color:var(--red)">1</span><span class="score-desc">Very low — tired all day, no motivation</span></div>
+          <div class="score-item"><span class="score-num" style="color:#fb923c">2</span><span class="score-desc">Low — sluggish, forced yourself</span></div>
+          <div class="score-item"><span class="score-num" style="color:var(--amber)">3</span><span class="score-desc">Average — nothing great or bad</span></div>
+          <div class="score-item"><span class="score-num" style="color:#a3e635">4</span><span class="score-desc">Good — active, focused, decent stamina</span></div>
+          <div class="score-item"><span class="score-num" style="color:var(--green)">5</span><span class="score-desc">High — energetic, sharp, motivated</span></div>
+        </div>
+
+        <div class="score-guide-card">
+          <h4>❤️ Libido (1–5)</h4>
+          <p style="color:var(--text-muted);font-size:0.8rem;margin-bottom:8px;">"How strong was my natural desire today?"</p>
+          <div class="score-item"><span class="score-num" style="color:var(--red)">1</span><span class="score-desc">No desire — no interest at all</span></div>
+          <div class="score-item"><span class="score-num" style="color:#fb923c">2</span><span class="score-desc">Low — rare thoughts, weak interest</span></div>
+          <div class="score-item"><span class="score-num" style="color:var(--amber)">3</span><span class="score-desc">Moderate — some interest, not strong</span></div>
+          <div class="score-item"><span class="score-num" style="color:#a3e635">4</span><span class="score-desc">Good — clear desire, responsive</span></div>
+          <div class="score-item"><span class="score-num" style="color:var(--green)">5</span><span class="score-desc">High — strong desire, strong response</span></div>
+        </div>
+      </div>
+
+      <div class="highlight-box" style="margin-top:16px;">
+        <strong>Extra markers to notice:</strong> Morning erections (yes/no/strong), ease of erection, spontaneous desire. These tell you more than numbers.
+      </div>
+
+      <div class="warning-box">
+        <strong>⚠️ Be honest, not optimistic.</strong> If you fake higher scores, you lose the whole benefit. Even going from 2 → 3 is real progress.
+      </div>
+    </div>
+  </div>
+
+  <!-- RULES SECTION -->
+  <div class="section" id="rules">
+    <div class="card info-section">
+      <h2>🔥 Rules You Must NOT Break</h2>
+      <ul>
+        <li><strong>❌ No skipping exercise more than 2 days in a row</strong></li>
+        <li><strong>❌ No all-night scrolling</strong></li>
+        <li><strong>❌ Don't expect motivation — follow routine anyway</strong></li>
+      </ul>
+
+      <h3>🧠 What Will Make the Biggest Difference</h3>
+      <p style="color:var(--text-muted);margin-bottom:8px;">If you do only 3 things consistently:</p>
+      <ul>
+        <li><strong>1. Exercise</strong></li>
+        <li><strong>2. Sleep</strong></li>
+        <li><strong>3. Reduce overstimulation</strong></li>
+      </ul>
+      <p style="color:var(--green);font-weight:600;margin-top:8px;">→ You will see change.</p>
+
+      <h3>📅 What to Expect</h3>
+      <ul>
+        <li>Week 1–2 → Slight increase in energy, mood</li>
+        <li>Week 2–3 → Morning erections improve</li>
+        <li>Week 3–4 → Better libido + more consistent performance</li>
+      </ul>
+      <p style="color:var(--text-muted);margin-top:8px;">Full optimization: 6–12 weeks. But <strong>1 month is enough to feel change.</strong></p>
+
+      <h3>⚠️ If No Improvement After 4–6 Weeks</h3>
+      <p style="color:var(--text-muted);">Get blood tests for:</p>
+      <ul>
+        <li>Vitamin D</li>
+        <li>Testosterone (morning test)</li>
+        <li>Vitamin B12</li>
+        <li>Thyroid (TSH)</li>
+      </ul>
+
+      <h3>🥗 Food Basics</h3>
+      <ul>
+        <li>Eggs (great for hormones)</li>
+        <li>Nuts (almonds, walnuts)</li>
+        <li>Protein (dal, paneer, chicken)</li>
+        <li>Avoid junk + excess sugar</li>
+      </ul>
+
+      <div class="highlight-box" style="margin-top:16px;">
+        <strong>Consistency > Perfection.</strong> Even 70% adherence = progress. If you miss a day, continue the next day (no restart mindset).
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✅ Saved!</div>
+
+<script>
+const START_DATE = new Date(2026, 3, 16);
+const TOTAL_DAYS = 30;
+const HABITS = ['sun', 'workout', 'move', 'noporn', 'sleep'];
+const HABIT_ICONS = { sun: '☀️', workout: '🏃', move: '🚶', noporn: '🚫', sleep: '😴' };
+const HABIT_NAMES = { sun: 'Sunlight', workout: 'Workout', move: 'Move Breaks', noporn: 'No Porn', sleep: 'Sleep 7+' };
+
+const WEEKS = [
+  { label: 'Week 1', start: 0, end: 7 },
+  { label: 'Week 2', start: 7, end: 14 },
+  { label: 'Week 3', start: 14, end: 21 },
+  { label: 'Week 4+', start: 21, end: 30 },
+];
+
+let data = loadData();
+
+function loadData() {
+  const saved = localStorage.getItem('tracker30day');
+  if (saved) return JSON.parse(saved);
+  const d = { days: {}, reviews: {} };
+  for (let i = 0; i < TOTAL_DAYS; i++) {
+    const date = new Date(START_DATE);
+    date.setDate(date.getDate() + i);
+    const key = dateKey(date);
+    d.days[key] = { habits: {}, energy: '', libido: '' };
+    HABITS.forEach(h => d.days[key].habits[h] = false);
+  }
+  return d;
+}
+
+function dateKey(d) {
+  return d.toISOString().split('T')[0];
+}
+
+function formatDate(d) {
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function todayKey() {
+  return dateKey(new Date());
+}
+
+function getDayNumber() {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const start = new Date(START_DATE);
+  start.setHours(0,0,0,0);
+  const diff = Math.floor((today - start) / 86400000);
+  return Math.max(0, Math.min(diff + 1, TOTAL_DAYS));
+}
+
+function renderTabs() {
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.tab).classList.add('active');
+      if (tab.dataset.tab === 'progress') renderProgress();
+    });
+  });
+}
+
+function renderTracker() {
+  const container = document.getElementById('weekContainer');
+  container.innerHTML = '';
+  const tk = todayKey();
+
+  WEEKS.forEach((week, wi) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    let reviewHtml = '';
+    const reviewKey = `week${wi+1}`;
+    const reviewVal = data.reviews?.[reviewKey] || '';
+    reviewHtml = `
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:6px;">📝 Weekly Review — What improved? What didn't?</p>
+        <textarea class="review-textarea" data-week="${reviewKey}" placeholder="Write your weekly update here...">${reviewVal}</textarea>
+      </div>
+    `;
+
+    card.innerHTML = `<h3>${week.label}</h3>`;
+
+    for (let i = week.start; i < week.end; i++) {
+      const date = new Date(START_DATE);
+      date.setDate(date.getDate() + i);
+      const key = dateKey(date);
+      const dayData = data.days[key] || { habits: {}, energy: '', libido: '' };
+      const isToday = key === tk;
+
+      const row = document.createElement('div');
+      row.className = 'day-row';
+
+      const label = document.createElement('div');
+      label.className = `day-label${isToday ? ' today' : ''}`;
+      label.textContent = formatDate(date);
+      row.appendChild(label);
+
+      const grid = document.createElement('div');
+      grid.className = 'habits-grid';
+
+      HABITS.forEach(h => {
+        const btn = document.createElement('button');
+        btn.className = `habit-btn${dayData.habits[h] ? ' checked' : ''}`;
+        btn.innerHTML = `${HABIT_ICONS[h]}<span class="tooltip">${HABIT_NAMES[h]}</span>`;
+        btn.addEventListener('click', () => {
+          dayData.habits[h] = !dayData.habits[h];
+          btn.classList.toggle('checked');
+          autoSave();
+          updateStats();
+        });
+        grid.appendChild(btn);
+      });
+
+      const eInput = document.createElement('input');
+      eInput.className = 'score-input';
+      eInput.type = 'number';
+      eInput.min = 1; eInput.max = 5;
+      eInput.placeholder = '⚡';
+      eInput.value = dayData.energy || '';
+      eInput.title = 'Energy (1-5)';
+      colorScore(eInput);
+      eInput.addEventListener('input', () => {
+        let v = parseInt(eInput.value);
+        if (v > 5) { eInput.value = 5; v = 5; }
+        if (v < 1 && eInput.value !== '') { eInput.value = 1; v = 1; }
+        dayData.energy = eInput.value ? v : '';
+        colorScore(eInput);
+        autoSave();
+        updateStats();
+      });
+      grid.appendChild(eInput);
+
+      const lInput = document.createElement('input');
+      lInput.className = 'score-input';
+      lInput.type = 'number';
+      lInput.min = 1; lInput.max = 5;
+      lInput.placeholder = '❤️';
+      lInput.value = dayData.libido || '';
+      lInput.title = 'Libido (1-5)';
+      colorScore(lInput);
+      lInput.addEventListener('input', () => {
+        let v = parseInt(lInput.value);
+        if (v > 5) { lInput.value = 5; v = 5; }
+        if (v < 1 && lInput.value !== '') { lInput.value = 1; v = 1; }
+        dayData.libido = lInput.value ? v : '';
+        colorScore(lInput);
+        autoSave();
+        updateStats();
+      });
+      grid.appendChild(lInput);
+
+      row.appendChild(grid);
+      card.appendChild(row);
+    }
+
+    card.insertAdjacentHTML('beforeend', reviewHtml);
+    container.appendChild(card);
+  });
+
+  document.querySelectorAll('.review-textarea').forEach(ta => {
+    ta.addEventListener('input', () => {
+      if (!data.reviews) data.reviews = {};
+      data.reviews[ta.dataset.week] = ta.value;
+      autoSave();
+    });
+  });
+}
+
+function colorScore(input) {
+  input.classList.remove('score-low', 'score-mid', 'score-high');
+  const v = parseInt(input.value);
+  if (!v) return;
+  if (v <= 2) input.classList.add('score-low');
+  else if (v <= 3) input.classList.add('score-mid');
+  else input.classList.add('score-high');
+}
+
+function updateStats() {
+  const dayNum = getDayNumber();
+  document.getElementById('dayCount').textContent = dayNum;
+
+  let totalChecked = 0, totalPossible = 0, streak = 0, maxStreak = 0;
+  let energySum = 0, energyCount = 0, libidoSum = 0, libidoCount = 0;
+
+  for (let i = 0; i < TOTAL_DAYS; i++) {
+    const date = new Date(START_DATE);
+    date.setDate(date.getDate() + i);
+    const key = dateKey(date);
+    const dd = data.days[key];
+    if (!dd) continue;
+
+    let dayComplete = 0;
+    HABITS.forEach(h => {
+      totalPossible++;
+      if (dd.habits[h]) { totalChecked++; dayComplete++; }
+    });
+
+    if (dd.energy) { energySum += parseInt(dd.energy); energyCount++; }
+    if (dd.libido) { libidoSum += parseInt(dd.libido); libidoCount++; }
+
+    if (dayComplete === HABITS.length) {
+      streak++;
+      maxStreak = Math.max(maxStreak, streak);
+    } else {
+      const dateObj = new Date(START_DATE);
+      dateObj.setDate(dateObj.getDate() + i);
+      if (dateObj <= new Date()) streak = 0;
+    }
+  }
+
+  document.getElementById('streakCount').textContent = streak;
+  document.getElementById('avgEnergy').textContent = energyCount ? (energySum / energyCount).toFixed(1) : '—';
+  document.getElementById('avgLibido').textContent = libidoCount ? (libidoSum / libidoCount).toFixed(1) : '—';
+
+  const pct = totalPossible > 0 ? Math.round((totalChecked / totalPossible) * 100) : 0;
+  document.getElementById('completionPct').textContent = pct + '%';
+}
+
+function renderProgress() {
+  let totalChecked = 0, totalPossible = 0;
+
+  for (let i = 0; i < TOTAL_DAYS; i++) {
+    const date = new Date(START_DATE);
+    date.setDate(date.getDate() + i);
+    const key = dateKey(date);
+    const dd = data.days[key];
+    if (!dd) continue;
+    HABITS.forEach(h => {
+      totalPossible++;
+      if (dd.habits[h]) totalChecked++;
+    });
+  }
+
+  const pct = totalPossible > 0 ? Math.round((totalChecked / totalPossible) * 100) : 0;
+  document.getElementById('overallProgress').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '% completed';
+
+  renderChart('energyChart', 'energy', 'energy-bar');
+  renderChart('libidoChart', 'libido', 'libido-bar');
+
+  const rc = document.getElementById('reviewsContainer');
+  rc.innerHTML = '';
+  WEEKS.forEach((w, i) => {
+    const rk = `week${i+1}`;
+    const rv = data.reviews?.[rk];
+    if (rv) {
+      const div = document.createElement('div');
+      div.style.cssText = 'margin-bottom:12px;padding:12px;background:var(--surface-2);border-radius:var(--radius-sm);';
+      div.innerHTML = `<strong style="font-size:0.85rem;">${w.label}</strong><p style="color:var(--text-muted);font-size:0.85rem;margin-top:4px;">${rv.replace(/\n/g, '<br>')}</p>`;
+      rc.appendChild(div);
+    }
+  });
+
+  if (!rc.children.length) {
+    rc.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem;">No reviews yet. Write them in the Tracker tab.</p>';
+  }
+}
+
+function renderChart(containerId, field, barClass) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+
+  for (let i = 0; i < TOTAL_DAYS; i++) {
+    const date = new Date(START_DATE);
+    date.setDate(date.getDate() + i);
+    const key = dateKey(date);
+    const dd = data.days[key];
+    const val = dd && dd[field] ? parseInt(dd[field]) : 0;
+
+    const row = document.createElement('div');
+    row.className = 'chart-row';
+
+    const label = document.createElement('div');
+    label.className = 'chart-label';
+    label.textContent = formatDate(date);
+
+    const barBg = document.createElement('div');
+    barBg.className = 'chart-bar-bg';
+
+    const bar = document.createElement('div');
+    bar.className = `chart-bar ${barClass}`;
+    bar.style.width = val ? (val * 20) + '%' : '0%';
+    if (val) bar.textContent = val;
+
+    barBg.appendChild(bar);
+    row.appendChild(label);
+    row.appendChild(barBg);
+    container.appendChild(row);
+  }
+}
+
+function autoSave() {
+  localStorage.setItem('tracker30day', JSON.stringify(data));
+}
+
+function saveData() {
+  autoSave();
+  showToast('✅ Progress saved!');
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'tracker-30day-export.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📤 Data exported!');
+}
+
+function resetData() {
+  if (!confirm('Are you sure you want to reset ALL data? This cannot be undone.')) return;
+  localStorage.removeItem('tracker30day');
+  data = loadData();
+  renderTracker();
+  updateStats();
+  showToast('🗑️ Data reset');
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+renderTabs();
+renderTracker();
+updateStats();
+</script>
+</body>
+</html>
