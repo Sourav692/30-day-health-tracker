@@ -2,8 +2,10 @@ services:
   - type: web
     name: 30-day-health-tracker
     runtime: node
-    buildCommand: echo "No build needed"
+    buildCommand: rm -rf node_modules && echo "No dependencies needed"
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
+      - key: SKIP_INSTALL
+        value: "true"
